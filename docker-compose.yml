@@ -1,0 +1,31 @@
+services:
+  backend:
+    build: ./backend
+    container_name: keepnotes-backend
+    ports:
+      - "8000:8010"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - mongo
+
+  frontend:
+    build: ./frontend
+    container_name: keepnotes-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_URL=http://backend:8000
+    depends_on:
+      - backend
+
+  mongo:
+    image: mongo:6
+    container_name: keepnotes-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
