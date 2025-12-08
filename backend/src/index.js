@@ -2,8 +2,9 @@ import dotenv from "dotenv"; // importing dotenv file
 import { connectDB } from "./config/db.js";
 import app from "./app.js";
 
-const PORT = 8010;
 dotenv.config(); // making sure that it is required and configured
+
+const PORT = process.env.PORT;
 
 async function startServer() {
   try {

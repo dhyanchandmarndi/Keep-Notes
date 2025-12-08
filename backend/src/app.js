@@ -2,7 +2,9 @@
 import express from "express";
 import cors from "cors";
 import notesRouter from "./routes/note.routes.js";
+import authRouter from "./routes/auth.routes.js";
 import { notFound, errorHandler } from "./middlewares/errorHandler.js";
+import { auth } from "./middlewares/auth.js";
 
 const app = express();
 
@@ -14,13 +16,14 @@ app.get("/", (req, res) => {
   res.send("Note App API is running");
 });
 
-// attach note routes
-app.use("/", notesRouter);
+// Auth routes (public)
+app.use("/auth", authRouter);
 
-// ⬇️ 404 handler (for unknown routes)
+// Note routes (protected)
+app.use("/", auth, notesRouter);
+// now /add-note, /get-all-notes, etc require a valid token
+
 app.use(notFound);
-
-// ⬇️ central error handler (for any errors passed with next(err))
 app.use(errorHandler);
 
 export default app;

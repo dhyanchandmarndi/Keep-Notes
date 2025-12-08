@@ -1,7 +1,8 @@
+// src/pages/Notes.jsx
 import React, { useEffect, useState } from "react";
-import NoteCard from "../component/NoteCard";
-import Dialog from "../component/Dialog";
-import axios from "axios";
+import NoteCard from "../components/NoteCard";
+import Dialog from "../components/Dialog";
+import { fetchAllNotes, removeNote } from "../services/notes";
 
 const Notes = () => {
   const [allNotes, setAllNotes] = useState([]);
@@ -14,16 +15,16 @@ const Notes = () => {
   // Get all notes
   const getAllNotes = async () => {
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/get-all-notes`
-      );
+      const response = await fetchAllNotes();
       console.log("Notes API Response:", response.data);
-      console.log("Fetched notes:", response.data.notes);
 
       if (response.data && response.data.notes) {
         setAllNotes(response.data.notes);
+      } else {
+        setAllNotes([]);
       }
     } catch (error) {
+      console.error(error);
       console.log("An unexpected error occured. Please try again.");
     }
   };
@@ -31,22 +32,15 @@ const Notes = () => {
   // Delete Note
   const deleteNote = async (noteId) => {
     try {
-      const response = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/delete-note/` + noteId
-      );
+      const response = await removeNote(noteId);
 
       if (response.data && !response.data.error) {
         console.log("Note Deleted Successfully");
         getAllNotes();
       }
     } catch (error) {
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        console.log("An unexpected error occured. Please try again.");
-      }
+      console.error(error);
+      console.log("An unexpected error occured. Please try again.");
     }
   };
 
@@ -56,7 +50,6 @@ const Notes = () => {
 
   useEffect(() => {
     getAllNotes();
-    return () => {};
   }, []);
 
   const toggleDarkMode = () => {
@@ -104,7 +97,7 @@ const Notes = () => {
 
       {/* Rendering all Notes */}
       <div className="grid grid-cols-[repeat(auto-fill,_minmax(300px,_1fr))] gap-6">
-        {allNotes.map((item, index) => (
+        {allNotes.map((item) => (
           <NoteCard
             key={item._id}
             title={item.title}
@@ -125,7 +118,6 @@ const Notes = () => {
           getAllNotes={getAllNotes}
         />
       )}
-      {}
     </>
   );
 };
