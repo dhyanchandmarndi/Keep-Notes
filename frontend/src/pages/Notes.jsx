@@ -1,8 +1,9 @@
-// src/pages/Notes.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import NoteCard from "../components/NoteCard";
 import Dialog from "../components/Dialog";
 import { fetchAllNotes, removeNote } from "../services/notes";
+import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Notes = () => {
   const [allNotes, setAllNotes] = useState([]);
@@ -12,12 +13,12 @@ const Notes = () => {
     data: null,
   });
 
-  // Get all notes
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+
   const getAllNotes = async () => {
     try {
       const response = await fetchAllNotes();
-      console.log("Notes API Response:", response.data);
-
       if (response.data && response.data.notes) {
         setAllNotes(response.data.notes);
       } else {
@@ -29,11 +30,9 @@ const Notes = () => {
     }
   };
 
-  // Delete Note
   const deleteNote = async (noteId) => {
     try {
       const response = await removeNote(noteId);
-
       if (response.data && !response.data.error) {
         console.log("Note Deleted Successfully");
         getAllNotes();
@@ -70,27 +69,47 @@ const Notes = () => {
     }
   }, []);
 
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <>
       <header className="flex justify-between items-center mb-4 ">
         <h1 className="mb-4 font-poppins font-bold text-4xl text-black dark:text-white">
           Keep Notes
         </h1>
-        <div>
+
+        <div className="flex items-center gap-4">
+          {user && (
+            <span className="text-black dark:text-white font-medium">
+              Hi, {user.name || user.email}
+            </span>
+          )}
+
           <button
-            className="bg-blue-600 hover:bg-blue-700  text-white border-none py-3 px-6 rounded-lg cursor-pointer font-medium transition-all duration-200 ease-linear hover:scale-[1.02]"
+            className="bg-blue-600 hover:bg-blue-700 text-white border-none py-3 px-6 rounded-lg cursor-pointer font-medium transition-all duration-200 ease-linear hover:scale-[1.02]"
             onClick={() => {
               setopenAddEditModal({ isShown: true, type: "add", data: null });
             }}
           >
             Add Note
           </button>
+
           <button
             id="theme-toggle-btn"
-            className="bg-blue-600 hover:bg-blue-700  border-none py-3 px-6 rounded-lg cursor-pointer font-medium transition-all duration-200 ease-linear ml-4 hover:scale-[1.02]"
+            className="bg-blue-600 hover:bg-blue-700 border-none py-3 px-4 rounded-lg cursor-pointer font-medium transition-all duration-200 ease-linear hover:scale-[1.02]"
             onClick={toggleDarkMode}
           >
             🌙
+          </button>
+
+          <button
+            className="bg-red-500 hover:bg-red-600 text-white border-none py-3 px-4 rounded-lg cursor-pointer font-medium transition-all duration-200 ease-linear hover:scale-[1.02]"
+            onClick={handleLogout}
+          >
+            Logout
           </button>
         </div>
       </header>
