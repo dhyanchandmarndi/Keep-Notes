@@ -1,37 +1,33 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+// src/components/Dialog.jsx
+import React, { useState } from "react";
+import { createNote, updateNote } from "../services/notes";
 
 const Dialog = ({ noteData, onClose, type, getAllNotes }) => {
   const [title, setTitle] = useState(noteData?.title || "");
   const [content, setContent] = useState(noteData?.content || "");
+  const [error, setError] = useState("");
 
   // Add Note
   const addNewNote = async () => {
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/add-note`,
-        {
-          title,
-          content,
-        }
-      );
+      const response = await createNote({ title, content });
 
-      if (response.data && response.data.note) {
-        console.log("Note added successfully:", response.data.note);
-        console.log("Calling getAllNotes...");
+      // backend currently doesn't return note object, so we just check error flag
+      if (response.data && !response.data.error) {
+        console.log("Note added successfully");
         if (getAllNotes) {
           await getAllNotes();
-          console.log("getAllNotes completed");
         }
         onClose();
+      } else {
+        setError(response.data?.message || "Failed to add note");
       }
     } catch (error) {
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
+      console.error(error);
+      if (error.response?.data?.message) {
         setError(error.response.data.message);
+      } else {
+        setError("An unexpected error occurred. Please try again.");
       }
     }
   };
@@ -40,37 +36,29 @@ const Dialog = ({ noteData, onClose, type, getAllNotes }) => {
   const editNote = async () => {
     const noteId = noteData._id;
     try {
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/edit-note/` + noteId,
-        {
-          title,
-          content,
-        }
-      );
+      const response = await updateNote(noteId, { title, content });
 
-      if (response.data && response.data.note) {
-        console.log("Note updated successfully:", response.data.note);
-        console.log("Calling getAllNotes...");
+      if (response.data && !response.data.error) {
+        console.log("Note updated successfully");
         if (getAllNotes) {
           await getAllNotes();
-          console.log("getAllNotes completed");
         }
         onClose();
+      } else {
+        setError(response.data?.message || "Failed to update note");
       }
     } catch (error) {
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
+      console.error(error);
+      if (error.response?.data?.message) {
         setError(error.response.data.message);
+      } else {
+        setError("An unexpected error occurred. Please try again.");
       }
     }
   };
 
   const handleFormSubmit = async (event) => {
-    // event.preventDefault();
-    // Handle the form submission here
+    event.preventDefault(); // ✅ prevent full page reload
     if (type === "edit") {
       editNote();
     } else {
@@ -110,9 +98,7 @@ const Dialog = ({ noteData, onClose, type, getAllNotes }) => {
               className="w-full p-3 bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-lg text-black dark:text-gray-100 transition-colors duration-200 ease-linear focus:outline-none focus:border-blue-600 dark:focus:border-blue-700"
               placeholder="Enter note title.."
               value={title}
-              onChange={({ target }) => {
-                setTitle(target.value);
-              }}
+              onChange={({ target }) => setTitle(target.value)}
               required
               autoFocus
             />
@@ -134,6 +120,8 @@ const Dialog = ({ noteData, onClose, type, getAllNotes }) => {
               required
             ></textarea>
           </div>
+
+          {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
 
           <div className="flex gap-4 justify-end">
             <button
